@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Incident Raiser</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #ffffff);
+      color: #333;
+      padding: 20px;
+      transition: background 0.3s, color 0.3s;
+    }
+    .dark-mode {
+      background: #121212;
+      color: #eee;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .dark-mode .container {
+      background: #1e1e1e;
+    }
+
+    h2, h3 {
+      margin-top: 0;
+    }
+
+    label, select, input {
+      font-size: 16px;
+    }
+
+    input, select {
+      padding: 6px;
+      width: 100%;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 8px 14px;
+      margin: 5px 5px 5px 0;
+      border: none;
+      border-radius: 6px;
+      background-color: #2196f3;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #1976d2;
+    }
+
+    .delete-btn {
+      background: crimson;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      background: #f1f1f1;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+
+    .dark-mode li {
+      background: #2c2c2c;
+    }
+
+    .priority-p1 {
+      border-left: 5px solid red;
+    }
+    .priority-p2 {
+      border-left: 5px solid orange;
+    }
+    .priority-p3 {
+      border-left: 5px solid green;
+    }
+
+    .top-buttons {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-buttons">
+      <button onclick="toggleTheme()">🌗 Toggle Dark/Light Mode</button>
+      <button onclick="loadHistory()">📜 View History</button>
+    </div>
+
+    <h2>Incident Form</h2>
+
+    <label>Description:</label>
+    <input type="text" id="desc">
+
+    <label>Category:</label>
+    <select id="category">
+      <option>Hardware</option>
+      <option>Software</option>
+      <option>Network</option>
+    </select>
+
+    <label>Priority:</label>
+    <p><strong>Priority Guide:</strong></p>
+    <ul>
+      <li><strong>P1:</strong> Critical issue (e.g., server down)</li>
+      <li><strong>P2:</strong> Major issue (e.g., multiple users affected)</li>
+      <li><strong>P3:</strong> Minor issue (e.g., single user)</li>
+    </ul>
+    <select id="priority">
+      <option value="p1">P1</option>
+      <option value="p2">P2</option>
+      <option value="p3">P3</option>
+    </select>
+
+    <button onclick="raiseIncident()">Submit</button>
+
+    <h3>Incident List:</h3>
+    <ul id="incidentList"></ul>
+  </div>
+
+  <script>
+    let incidents = [];
+    let isDark = false;
+
+    function raiseIncident() {
+      const desc = document.getElementById("desc").value;
+      const category = document.getElementById("category").value;
+      const priority = document.getElementById("priority").value;
+
+      if (desc.trim() === "") {
+        alert("Please enter a description.");
+        return;
+      }
+
+      const incident = {
+        desc,
+        category,
+        priority,
+        status: "Open",
+        createdAt: new Date().toLocaleString()
+      };
+
+      incidents.push(incident);
+      saveAndRender();
+      document.getElementById("desc").value = "";
+    }
+
+    function renderIncidents() {
+      const list = document.getElementById("incidentList");
+      list.innerHTML = "";
+
+      incidents.forEach((incident, index) => {
+        const li = document.createElement("li");
+        li.classList.add(`priority-${incident.priority}`);
+
+        li.innerHTML = `<strong>[${incident.priority.toUpperCase()}]</strong> ${incident.category} - ${incident.desc} 
+        <br>🕒 ${incident.createdAt} | Status: <strong>${incident.status}</strong>`;
+
+        const startBtn = document.createElement("button");
+        startBtn.textContent = "Start";
+        startBtn.onclick = () => {
+          incident.status = "In Progress";
+          saveAndRender();
+        };
+
+        const resolveBtn = document.createElement("button");
+        resolveBtn.textContent = "Resolve";
+        resolveBtn.onclick = () => {
+          incident.status = "Resolved";
+          saveAndRender();
+        };
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.classList.add("delete-btn");
+        deleteBtn.onclick = () => {
+          incidents.splice(index, 1);
+          saveAndRender();
+        };
+
+        li.appendChild(startBtn);
+        li.appendChild(resolveBtn);
+        li.appendChild(deleteBtn);
+        list.appendChild(li);
+      });
+    }
+
+    function saveAndRender() {
+      localStorage.setItem("incidentHistory", JSON.stringify(incidents));
+      renderIncidents();
+    }
+
+    function loadHistory() {
+      const stored = localStorage.getItem("incidentHistory");
+      if (stored) {
+        incidents = JSON.parse(stored);
+        renderIncidents();
+        applyTheme(); // make sure theme is reapplied
+      } else {
+        alert("No incident history found.");
+      }
+    }
+
+    function toggleTheme() {
+      isDark = !isDark;
+      document.body.classList.toggle("dark-mode");
+      localStorage.setItem("darkMode", isDark ? "on" : "off");
+    }
+
+    function applyTheme() {
+      const darkPref = localStorage.getItem("darkMode");
+      if (darkPref === "on") {
+        isDark = true;
+        document.body.classList.add("dark-mode");
+      } else {
+        isDark = false;
+        document.body.classList.remove("dark-mode");
+      }
+    }
+
+    applyTheme();
+  </script>
+</body>
+</html>
